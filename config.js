@@ -1,4 +1,2 @@
-// Supabase > Project Settings > API. The anon key is meant to be public; the security rules in schema.sql protect your data.
-// Never put the "service_role" key here.
-const SUPABASE_URL = 'PASTE_PROJECT_URL';
-const SUPABASE_KEY = 'PASTE_ANON_PUBLIC_KEY';
+const SUPABASE_URL = 'https://xzmwilfscfndpjpyaezf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInJlZiI6Inh6bXdpbGZzY2ZuZHBqcHlhZXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2NDA4MzQsImV4cCI6MjEwNzIxNjgzNH0.94tqQeUZt9L4thltNznGXhCdyoe5t8H6vZGbfOsxufQ';
