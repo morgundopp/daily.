@@ -150,7 +150,7 @@ const av=(n,ring)=>`<span class="av${ring?' ring':''}" style="--h:${hue(n)}">${e
 const dayLabel=x=>{const d=day()-x;return d===0?'Today':d===1?'Yesterday':d+' days ago'};
 S={shift:0,gid:null,tab:0,groups:[],moments:[],me:{name:'You',user:'you',av:''},ptab:0,act:'all'};
 function save(){}
-function toast(t){document.querySelectorAll('.toast').forEach(x=>x.remove());const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2200)}
+function toast(t){document.querySelectorAll('.toast').forEach(x=>x.remove());const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3500)}
 function left(){const n=new Date(),e=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1),m=Math.max(0,Math.floor((e-n)/6e4));return Math.floor(m/60)+'h '+m%60+'m'}
 function render(){const a=document.getElementById('app');
 if(S.gid&&!G(S.gid))S.gid=null;
@@ -192,12 +192,12 @@ ${v.comments.map(c=>`<div class="cm">${av(c.by)}<div><b>${esc(c.by)}</b><p>${esc
 <div class="cin"><input id="ci" placeholder="Add a comment" maxlength="200" aria-label="Comment"><button class="btn" data-act="comment">Send</button></div></div>`}
 function keepScroll(fn,bottom){const x=document.querySelector('#ov .scroll'),y=x?x.scrollTop:0;fn();const n=document.querySelector('#ov .scroll');if(n)n.scrollTop=bottom?n.scrollHeight:y}
 async function sendComment(){const i=document.getElementById('ci'),t=i.value.trim();if(!t)return;const v=item();i.value='';v.comments.push({by:'You',text:t});keepScroll(viewer,1);
-const {error}=await sb.from('comments').insert({target_type:v.type,target_id:v.id,user_id:ME.id,body:t.slice(0,200)});if(error){toast(errMsg(error));await refresh()}}
+const {error}=await sb.from('comments').insert({target_type:v.type,target_id:v.id,user_id:ME.id,body:t.slice(0,200)});if(error){fail(error);await refresh()}}
 async function reactToggle(e){const v=item(),l=v.reactions[e]||[],has=l.includes('You');
 if(has){v.reactions[e]=l.filter(n=>n!=='You');if(!v.reactions[e].length)delete v.reactions[e]}else(v.reactions[e]=v.reactions[e]||[]).push('You');
 keepScroll(viewer);
 const k={target_type:v.type,target_id:v.id,user_id:ME.id,emoji:e};
-const {error}=has?await sb.from('reactions').delete().match(k):await sb.from('reactions').insert(k);if(error){toast(errMsg(error));await refresh()}}
+const {error}=has?await sb.from('reactions').delete().match(k):await sb.from('reactions').insert(k);if(error){fail(error);await refresh()}}
 function feed(a){const it=[];S.groups.forEach(g=>Object.entries(g.vlogs).forEach(([d,v])=>v.by!=='You'&&it.push({g,d:+d,v})));S.moments.forEach(v=>v.by!=='You'&&it.push({m:v.id,d:v.day,v}));it.sort((x,y)=>y.d-x.d);
 a.innerHTML='<h1 class="logo" style="font-size:30px">Personal Feed</h1>'+(it.length?'<p><button class="btn ghost" data-act="invite">Invite friends</button></p>':'')+(it.length?it.map(({g,m,d,v})=>`<div class="card today" data-act="view" ${g?`data-gid="${g.id}"`:`data-m="${m}"`} data-d="${d}"><div class="who">${av(v.by)}<span><b>${esc(v.by)}</b><br><small>${g?esc(g.name)+' · vlog':'Daily moment'} · ${dayLabel(d)}</small></span></div><div class="meta"><b>${esc(v.cap||'Untitled')}</b><br><small>▶ ${fmt(v.dur)} · ${Object.values(v.reactions).flat().length} reactions · ${v.comments.length} comments</small></div></div>`).join(''):'<div class="empty"><b>No items in your feed yet</b><small>invite friends to start seeing their vlogs!</small><p style="margin-top:28px"><button class="btn" data-act="invite">Invite friends</button></p></div>')}
 async function invite(){const g=G(S.gid)||S.groups[0],t='Join me on Daily! One friend vlogs each day, everyone reacts.'+(g?' Group code: '+g.code:''),u=location.origin+location.pathname+(g?'?join='+g.code:'');
@@ -230,24 +230,40 @@ a.innerHTML=`<div class="pbg${me.av?'':' none'}" ${me.av?`style="background-imag
 <input type="file" id="av" accept="image/*" hidden>
 <div class="ptabs"><button class="${S.ptab===0?'on':''}" data-act="pt" data-t="0">Vlogs</button><button class="${S.ptab===1?'on':''}" data-act="pt" data-t="1">Moments</button></div>
 ${list.join('')||`<div class="pe"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="3"/><path d="M15.5 10.5L21 7.5v9l-5.5-3"/><path d="M3 3l18 18"/></svg><p>No ${S.ptab===0?'vlogs':'moments'} yet</p></div>`}</div>`}
-function psheet(on){document.getElementById('sheet').innerHTML=on?`<div class="ov"><div class="top"><button class="ib" data-act="sclose" aria-label="Close">✕</button><b>Edit profile</b></div><div class="scroll form"><label>Name<input id="pn" maxlength="24" value="${esc(S.me.name)}"></label><label>Username<input id="pu" maxlength="20" value="${esc(S.me.user)}"></label><button class="btn big" data-act="psave">Save</button><p><button class="btn ghost big" data-act="signout">Sign out</button></p></div></div>`:''}
+function psheet(on){document.getElementById('sheet').innerHTML=on?`<div class="ov"><div class="top"><button class="ib" data-act="sclose" aria-label="Close">✕</button><b>Edit profile</b></div><div class="scroll form"><label>Name<input id="pn" maxlength="24" value="${esc(S.me.name)}"></label><label>Username<input id="pu" maxlength="20" value="${esc(S.me.user)}"></label><button class="btn big" data-act="psave">Save</button><p><button class="btn ghost big" data-act="check">Run a check</button></p><p><button class="btn ghost big" data-act="signout">Sign out</button></p></div></div>`:''}
 async function psave(){const n=document.getElementById('pn').value.trim(),u=document.getElementById('pu').value.trim().replace(/^@/,'').replace(/\s+/g,'').toLowerCase();
 if(!n||!/^[a-z0-9_.]{3,20}$/.test(u))return toast('Username: 3-20 letters, numbers, _ or .');
 const {error}=await sb.from('profiles').update({display_name:n,username:u}).eq('id',ME.id);if(error)return toast(/duplicate/.test(error.message)?'That username is taken':errMsg(error));
 S.me.name=n;S.me.user=u;psheet(false);await refresh();toast('Saved')}
 async function setAvatar(b){try{const path=ME.id+'/avatar.jpg';let r=await sb.storage.from('avatars').upload(path,b,{upsert:true,contentType:'image/jpeg'});if(r.error)throw r.error;
-const url=sb.storage.from('avatars').getPublicUrl(path).data.publicUrl+'?v='+Date.now();r=await sb.from('profiles').update({avatar_url:url}).eq('id',ME.id);if(r.error)throw r.error;S.me.av=url;render()}catch(e){toast(errMsg(e))}}
+const url=sb.storage.from('avatars').getPublicUrl(path).data.publicUrl+'?v='+Date.now();r=await sb.from('profiles').update({avatar_url:url}).eq('id',ME.id);if(r.error)throw r.error;S.me.av=url;render()}catch(e){fail(e)}}
 /* ---- Supabase ---- */
 let sb,ME;const URLC={};
+function fail(e,t){const m=typeof e==='string'?e:[errMsg(e),e&&e.details,e&&e.hint,e&&e.code&&'('+e.code+')'].filter(Boolean).join('\n');
+const d=document.createElement('div');d.className='ov';d.style.cssText='z-index:40;background:#000b;justify-content:center;padding:24px';
+d.innerHTML='<div class="card"><b></b><p style="white-space:pre-wrap;user-select:text;word-break:break-word"></p><button class="btn big">OK</button></div>';
+d.querySelector('b').textContent=t||'Something went wrong';d.querySelector('p').textContent=m;d.querySelector('button').onclick=()=>d.remove();document.body.appendChild(d)}
+const VERSION='2026-10-10c';
+async function runCheck(){const out=['Version '+VERSION,'User '+ME.id.slice(0,8)];
+const T=async(l,f)=>{try{const r=await f();out.push((r.error?'FAIL ':'ok ')+l+(r.error?': '+r.error.message:(r.data&&r.data.length!=null?' ('+r.data.length+' rows)':'')))}catch(e){out.push('FAIL '+l+': '+errMsg(e))}};
+await T('profile row',()=>sb.from('profiles').select('id').eq('id',ME.id));
+await T('my group memberships',()=>sb.from('group_members').select('group_id').eq('user_id',ME.id));
+await T('groups I can see',()=>sb.from('groups').select('id'));
+await T('moments I can see',()=>sb.from('moments').select('id'));
+await T('test moment insert',()=>sb.from('moments').insert({user_id:ME.id,day:-1,duration:1}));
+await T('test moment delete',()=>sb.from('moments').delete().eq('user_id',ME.id).eq('day',-1));
+await T('test upload',()=>sb.storage.from('videos').upload(ME.id+'/check-'+Date.now()+'.txt',new Blob(['hi'],{type:'text/plain'})));
+fail(out.join('\n'),'Check results')}
+function codeSheet(c,n){document.getElementById('sheet').innerHTML=`<div class="ov"><div class="top"><button class="ib" data-act="sclose" aria-label="Close">✕</button><b>${esc(n)} is ready</b></div><div class="scroll"><p class="mute">Send this code to your friends, or share an invite link. You can always find the code on the group page.</p><div class="card" style="text-align:center"><div style="font-size:44px;font-weight:800;letter-spacing:4px;user-select:all">${esc(c)}</div></div><button class="btn big" data-act="copycode" data-c="${esc(c)}">Copy code</button><p><button class="btn ghost big" data-act="invite">Share invite link</button></p><p><button class="btn ghost big" data-act="sclose">Done</button></p></div></div>`}
 const errMsg=e=>{const m=(e&&e.message)||'Something went wrong';return /duplicate key/.test(m)?"You've already posted for today":m};
 const ext=b=>/mp4/.test(b.type)?'mp4':/quicktime/.test(b.type)?'mov':'webm';
 async function upload(b){const path=ME.id+'/'+crypto.randomUUID()+'.'+ext(b);const {error}=await sb.storage.from('videos').upload(path,b,{contentType:b.type||'video/webm'});if(error)throw error;return path}
 async function postVlog(gids,d,sec,cap,blob){toast('Posting…');try{const path=blob?await upload(blob):null;
 for(const id of gids){const {error}=await sb.from('vlogs').insert({group_id:id,user_id:ME.id,day:d,caption:cap||'',duration:Math.max(1,Math.round(sec)),video_path:path});if(error)throw error}
-await loadAll();render();toast('Vlog posted to your group')}catch(e){toast(errMsg(e))}}
+await loadAll();render();toast('Vlog posted to your group')}catch(e){fail(e)}}
 async function postMoment(d,sec,cap,blob){toast('Posting…');try{const path=blob?await upload(blob):null;
 const {error}=await sb.from('moments').insert({user_id:ME.id,day:d,caption:cap||'',duration:Math.max(1,Math.round(sec)),video_path:path});if(error)throw error;
-await loadAll();render();toast('Moment posted to your feed')}catch(e){toast(errMsg(e))}}
+await loadAll();render();toast('Moment posted to your feed')}catch(e){fail(e)}}
 async function loadAll(){const day0=day()-30,none={data:[]};
 const {data:mem,error:e1}=await sb.from('group_members').select('joined_at,groups(id,name,code,start_day)').eq('user_id',ME.id).order('joined_at');if(e1)throw e1;
 const gs=mem.map(m=>m.groups).filter(Boolean),gids=gs.map(g=>g.id);
@@ -277,9 +293,11 @@ const top=t=>`<div class="top"><button class="ib" data-act="sclose" aria-label="
 el.innerHTML=k==='join'?`<div class="ov">${top('Join a group')}<div class="scroll form"><label>Invite code<input id="gc" maxlength="12" autocapitalize="characters" placeholder="K7M2QX"></label><button class="btn big" data-act="dojoin">Join group</button></div></div>`
 :`<div class="ov">${top('New group')}<div class="scroll form"><label>Group name<input id="gn" maxlength="30" placeholder="Roomies"></label><button class="btn big" data-act="create">Create group</button></div></div>`}
 async function create(){const n=document.getElementById('gn').value.trim();if(!n)return toast('Give your group a name');
-const {data,error}=await sb.rpc('create_group',{p_name:n,p_start_day:day()});if(error)return toast(errMsg(error));
-sheet(false);await loadAll();S.gid=data.id;render();toast('Group created. Invite code: '+data.code)}
-async function doJoin(){const c=document.getElementById('gc').value.trim();if(!c)return;const {data,error}=await sb.rpc('join_group',{p_code:c});if(error)return toast(errMsg(error));
+const {data,error}=await sb.rpc('create_group',{p_name:n,p_start_day:day()});if(error)return fail(error);
+sheet(false);try{await loadAll()}catch(e){fail(e)}
+if(!G(data.id)){S.groups.push({id:data.id,name:data.name,code:data.code,start:data.start_day,created:data.start_day,members:['You'],vlogs:{}});fail("The group was created, but the database didn't send it back. Open Profile, tap the ••• button, tap Run a check, and send a screenshot of the results.")}
+S.tab=1;S.gid=data.id;render();codeSheet(data.code,data.name)}
+async function doJoin(){const c=document.getElementById('gc').value.trim();if(!c)return;const {data,error}=await sb.rpc('join_group',{p_code:c});if(error)return fail(error);
 sheet(false);await loadAll();S.gid=data;render();toast('Joined the group!')}
 async function signOut(){await sb.auth.signOut();location.reload()}
 function authUI(mode,msg){mode=mode||'in';const o=document.getElementById('auth'),up=mode==='up';
@@ -299,9 +317,9 @@ let started=0;
 async function start(user){ME=user;document.getElementById('auth').innerHTML='';
 const {data:p}=await sb.from('profiles').select('*').eq('id',ME.id).single();
 S.me={name:(p&&(p.display_name||p.username))||'You',user:(p&&p.username)||'you',av:(p&&p.avatar_url)||''};
-try{await loadAll()}catch(e){toast(errMsg(e))}
+try{await loadAll()}catch(e){fail(e)}
 const j=new URLSearchParams(location.search).get('join');
-if(j){history.replaceState(null,'',location.pathname);const r=await sb.rpc('join_group',{p_code:j});if(r.error)toast(errMsg(r.error));else{try{await loadAll()}catch(e){}S.tab=1;S.gid=r.data;toast('Joined the group!')}}
+if(j){history.replaceState(null,'',location.pathname);const r=await sb.rpc('join_group',{p_code:j});if(r.error)fail(r.error);else{try{await loadAll()}catch(e){}S.tab=1;S.gid=r.data;toast('Joined the group!')}}
 render();if(!started){started=1;setInterval(()=>{if(ME&&!R&&document.visibilityState==='visible')refresh()},20000)}}
 async function boot(){const o=document.getElementById('auth');
 if(typeof SUPABASE_URL==='undefined'||/^PASTE/.test(SUPABASE_URL)||!window.supabase){o.innerHTML='<div class="ov"><div class="scroll form" style="padding-top:60px"><h1 class="logo" style="font-size:44px">daily<i>.</i></h1><p>Almost there. Add your Supabase project URL and anon key to <b>config.js</b>, then reload.</p></div></div>';return}
@@ -325,7 +343,7 @@ const fin=()=>{const k=R.kind,g=R.gids,d=R.day,sc=R.sec,c=R.cap,bl=R.blob;endRec
 if(R.mr&&R.mr.state!=='inactive'){R.mr.onstop=()=>{R.blob=new Blob(R.chunks,{type:R.mr.mimeType||'video/webm'});fin()};R.mr.stop()}else fin()}
 /* new group */
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
-if(a==='invite')invite();else if(a==='tab'){S.tab=+b.dataset.t;S.gid=null;save();render()}else if(a==='new')sheet(true);else if(a==='join')sheet('join');else if(a==='dojoin')doJoin();else if(a==='signout')signOut();else if(a==='sclose')sheet(false);else if(a==='create')create();
+if(a==='invite')invite();else if(a==='tab'){S.tab=+b.dataset.t;S.gid=null;save();render()}else if(a==='new')sheet(true);else if(a==='copycode'){navigator.clipboard.writeText(b.dataset.c).then(()=>toast('Code copied'),()=>toast('Press and hold the code to copy it'))}else if(a==='join')sheet('join');else if(a==='dojoin')doJoin();else if(a==='signout')signOut();else if(a==='check')runCheck();else if(a==='sclose')sheet(false);else if(a==='create')create();
 else if(a==='open'){S.gid=b.dataset.id;save();render()}else if(a==='back'){S.gid=null;save();render()}
 else if(a==='view'){V=b.dataset.m!=null?{m:b.dataset.m,day:+b.dataset.d}:{gid:b.dataset.gid||S.gid,day:+b.dataset.d};viewer()}else if(a==='close'){V=null;viewer();render()}
 else if(a==='react')reactToggle(b.dataset.e);
