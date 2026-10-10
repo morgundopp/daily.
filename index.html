@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daily</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1a1a21;--card:#25252e;--ink:#F4F0E6;--mute:#8f8da4;--acc:#FF4F2E;--line:#3a3948;--on:#4A2630;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.4 'Bricolage Grotesque',system-ui,sans-serif}
+button,input{font:inherit;color:inherit}
+.app{max-width:480px;margin:0 auto;padding:18px 16px 48px}
+.logo{font-weight:800;font-size:34px;letter-spacing:-1.5px;margin:0}
+.logo i{color:var(--acc);font-style:normal}
+.row{display:flex;align-items:center;gap:10px}.sp{justify-content:space-between}
+.mute{color:var(--mute)}small{color:var(--mute)}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:99px;padding:12px 20px;font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.big{width:100%;padding:16px;font-size:18px}
+.ib{background:var(--card);border:0;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:16px}
+.card{background:var(--card);border-radius:22px;padding:16px;margin:12px 0}
+.gcard{display:block;width:100%;text-align:left;border:0;cursor:pointer}
+.gcard h3{margin:0 0 6px;font-size:20px}
+.av{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:hsl(var(--h) 70% 50%);color:#fff;font-weight:600;flex:none;margin-right:-8px;border:2px solid var(--card)}
+.av.ring{outline:3px solid var(--acc);outline-offset:1px}
+.avs{display:flex;padding-left:0;margin-bottom:8px}
+.poster{--h:20;position:relative;aspect-ratio:3/4;border-radius:26px;overflow:hidden;display:grid;place-items:center;color:#fff;background:linear-gradient(160deg,hsl(var(--h) 80% 55%),hsl(calc(var(--h) + 60) 75% 32%))}
+.poster video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+.poster .big{font-size:120px;font-weight:800;opacity:.9}
+.poster .dur{position:absolute;bottom:14px;right:16px;background:#0006;padding:3px 10px;border-radius:99px;font-size:14px}
+.today{padding:0;overflow:hidden;cursor:pointer}
+.today .poster{border-radius:0;aspect-ratio:4/3}
+.today .meta{padding:14px 16px}
+.pill{display:inline-block;background:var(--on);color:var(--acc);border-radius:99px;padding:2px 10px;font-weight:600;font-size:14px}
+h2{font-size:18px;margin:26px 0 6px}h3{margin:18px 0 8px}
+.past{display:flex;align-items:center;gap:12px;width:100%;background:var(--card);border:0;border-radius:16px;padding:10px;margin:8px 0;text-align:left;cursor:pointer}
+.thumb{--h:20;width:48px;height:60px;border-radius:12px;background:hsl(var(--h) 70% 50%);display:grid;place-items:center;color:#fff;font-weight:800;font-size:22px;flex:none}
+.thumb.none{background:var(--line)}
+.ov{position:fixed;inset:0;z-index:10;background:var(--bg);display:flex;flex-direction:column;max-width:480px;margin:0 auto;padding-top:env(safe-area-inset-top,0px)}
+.top{display:flex;align-items:center;gap:12px;padding:10px 16px}
+.scroll{flex:1;overflow-y:auto;padding:0 16px 16px}
+.cap{font-size:18px;margin:14px 2px}
+.rx{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--card);border:1.5px solid transparent;border-radius:99px;padding:8px 14px;cursor:pointer;font-size:17px}
+.chip.on{background:var(--on);border-color:var(--acc)}
+.cm{display:flex;gap:12px;margin:12px 0}.cm .av{margin-right:0}.cm p{margin:2px 0}
+.cin{display:flex;gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--card)}
+input{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--bg);border-radius:99px;padding:11px 16px;outline:none}
+input:focus-visible,button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.form input{width:100%;border-radius:14px;margin:6px 0 14px}
+.rec{background:#0b0a16;color:#fff;max-width:480px}
+.rec video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.rec .layer{position:relative;flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:16px;background:linear-gradient(#0008,#0000 30%,#0000 55%,#000b)}
+.rec input{background:#0007;border-color:#fff4;color:#fff;width:100%;margin-bottom:12px}
+.bar{height:5px;background:#fff3;border-radius:9px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;width:0;background:var(--acc)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--acc);animation:p 1s infinite}
+@keyframes p{50%{opacity:.2}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;z-index:30;font-weight:600}
+
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:5;max-width:480px;margin:0 auto;display:flex;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+.nav button{flex:1;background:none;border:0;padding:10px 0;color:var(--mute);cursor:pointer;display:grid;place-items:center}
+.nav button.on{color:var(--acc)}
+.nav svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.empty{text-align:center;padding:90px 20px}.empty b{font-size:22px;display:block}.empty small{font-size:14px;display:block;margin-top:6px}
+.app{padding-bottom:96px}
+.who{display:flex;align-items:center;gap:10px;padding:12px 16px 0}.who .av{margin-right:0}
+.ghead{display:flex;justify-content:space-between;align-items:center;margin:4px 0 28px}
+.sticker{background:#FF4F2E;color:#fff;font-weight:800;font-size:28px;letter-spacing:-1px;padding:6px 16px;border-radius:12px;border:3px solid #fff8;transform:rotate(-3deg);box-shadow:0 4px 0 #0003}
+.addf{display:flex;align-items:center;gap:8px;background:#fff;color:#1A1736;border:0;border-radius:18px;padding:12px 16px;font-weight:800;transform:rotate(2deg);box-shadow:0 5px 14px #0003;cursor:pointer}
+.addf svg{width:22px;height:22px;fill:none;stroke:#FF4F2E;stroke-width:2;stroke-linecap:round}
+.sec{display:flex;justify-content:space-between;color:var(--mute);font-weight:800;letter-spacing:1.5px;font-size:14px;margin-bottom:12px}
+.gc{position:relative;display:flex;align-items:center;width:100%;margin:30px 0 0;padding:0;border:3px solid #0d0c18;border-radius:28px;background:linear-gradient(#2c2c38,#1c1c25);color:#fff;text-align:left;cursor:pointer;box-shadow:0 6px 0 #0d0c18;min-height:104px}
+.gph{position:absolute;left:12px;top:-20px;width:84px;height:96px;transform:rotate(-3deg)}
+.gg{display:grid;grid-template-columns:1fr 1fr;width:100%;height:100%;border-radius:16px;overflow:hidden;border:3px solid #0d0c18}
+.gg i{display:grid;place-items:center;font-style:normal;font-weight:800;font-size:24px;background:hsl(var(--h) 65% 50%)}
+.fl{position:absolute;left:-8px;bottom:-12px;background:#14131f;color:#fff;border:2px solid #fff;border-radius:99px;padding:2px 12px;font-weight:800;font-size:16px}
+.gmid{margin-left:108px;flex:1;display:flex;flex-direction:column;gap:8px;padding:14px 8px 14px 0;min-width:0}
+.gname{align-self:flex-start;background:#fff;color:#1A1736;font-weight:800;padding:5px 12px;border-radius:9px;font-size:17px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gsub{color:#a09eb8;font-size:15px}
+.gst{width:76px;align-self:stretch;display:grid;place-items:center;text-align:center;border-left:2px dashed #4a4860;margin:14px 0;color:#7c7a92;font-weight:800;font-size:13px;letter-spacing:1.5px;line-height:1.6}
+.gst b{font-weight:800}.gst .hot{color:#FF6B4A}
+.newg{width:100%;margin-top:28px;padding:28px 0;background:none;border:2.5px dashed var(--line);border-radius:26px;color:var(--mute);font-weight:800;font-size:20px;cursor:pointer}
+
+.nav{background:#1c1b24;border-top:0;align-items:center}
+.nav button{color:#8a889e}
+.nav button.cam{flex:none;width:76px;height:58px;padding:0;margin:0 4px;background:#FF4F2E;color:#fff;border-radius:20px;box-shadow:0 5px 0 #b8341a;transform:translateY(-12px)}
+body.pg3{background:#FF4F2E}
+.p3{text-align:center;padding-top:30px}
+.polaroid{background:#EFEADF;border-radius:20px;padding:16px 16px 14px;transform:rotate(-2deg);box-shadow:0 22px 40px #0004;margin:0 6px}
+.pin{position:relative;overflow:hidden;aspect-ratio:4/3.1;border-radius:12px;background:#1f1f27;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#F1EDE2;font-size:28px;font-weight:800;line-height:1.15}
+.pin::before{content:"";position:absolute;right:-40px;top:-70px;width:62%;aspect-ratio:1;border-radius:50%;background:#4d2c2e}
+.pin>*{position:relative}
+.rc{width:84px;height:84px;border-radius:50%;background:#FF4F2E;display:grid;place-items:center}
+.rc svg{width:44px;height:44px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pfoot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;color:#3b3a46;font-weight:800;padding:0 6px}
+.tag{border:2.5px solid #FF4F2E;color:#FF4F2E;border-radius:9px;padding:1px 10px;font-weight:800;background:#fff7f2}
+.ptxt{color:#1a1425;font-size:19px;font-weight:800;line-height:1.35;margin:30px 4px}
+.dk{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;background:#2d2d36;color:#fff;border:0;border-radius:24px;padding:22px;font-weight:800;font-size:19px;margin-bottom:16px;box-shadow:0 8px 18px #0003;cursor:pointer}
+.dk svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.gc:focus-visible{outline:3px solid var(--acc);outline-offset:3px}
+.vb{background:none;border:0;padding:0;cursor:pointer}.vb svg{width:60px;height:auto;display:block}
+.fcs{display:flex;gap:10px;overflow-x:auto;margin:20px -16px 4px;padding:0 16px 6px;scrollbar-width:none}
+.fc{flex:none;border:0;border-radius:99px;padding:14px 22px;font-weight:800;font-size:18px;background:#2b2b34;color:#b4b2c4;cursor:pointer}
+.fc.on{background:#F1EBDD;color:#1a1a21}
+.eico{width:52px;height:52px;fill:none;stroke:#8f8da4;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;margin-bottom:12px}
+.act{display:flex;align-items:center;gap:12px;width:100%;background:var(--card);border:0;border-radius:16px;padding:12px;margin:10px 0;text-align:left;cursor:pointer}.act .av{margin-right:0}
+.pbg{position:fixed;inset:0;z-index:-1;background:center/cover;filter:blur(38px) saturate(1.1);transform:scale(1.3);opacity:.85}
+.pbg.none{background:linear-gradient(160deg,#d98c7e,#6f5254)}
+.profw{color:#fff}
+.ptop{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin:4px 0 24px}
+.uname{background:#fff;color:#14131f;font-weight:800;font-size:23px;padding:8px 22px;border-radius:16px;box-shadow:0 6px 16px #0003}
+.dots{justify-self:end;background:none;border:0;color:#fff;font-size:22px;letter-spacing:2px;cursor:pointer;padding:8px}
+.prow{display:flex;gap:20px;align-items:center}
+.pav{flex:none;width:122px;height:122px;border-radius:50%;border:4px solid #ffffffb0;background:linear-gradient(160deg,#FF4F2E,#8a3a5a);color:#fff;font-size:52px;font-weight:800;overflow:hidden;padding:0;cursor:pointer}
+.pav img{width:100%;height:100%;object-fit:cover;display:block}
+.pname{font-size:21px;opacity:.9}
+.stats{display:flex;gap:18px;margin-top:6px}.stats>div{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.n{font-size:34px;font-weight:800;line-height:1}
+.lab{background:#fff;color:#14131f;border:2px solid #14131f;border-radius:9px;padding:2px 9px;font-weight:800;font-size:14px;box-shadow:3px 3px 0 #14131f}
+.ptabs{display:grid;grid-template-columns:1fr 1fr;margin:30px 0 8px}
+.ptabs button{background:none;border:0;border-bottom:5px solid #ffffff30;border-radius:4px;color:#ffffffb0;font-weight:600;font-size:21px;padding:12px 0 14px;cursor:pointer}
+.ptabs button.on{color:#fff;border-bottom-color:#EFEADF}
+.pl{background:#0004;color:#fff}.pl small{color:#ffffffb8}
+.pe{text-align:center;padding:50px 0;color:#ffffffc0;font-size:22px}
+.pe svg{width:56px;height:56px;fill:none;stroke:#ffffffc0;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+</style></head><body>
+<div class="app" id="app"></div><div id="ov"></div><div id="sheet"></div><div id="auth"></div>
+<nav class="nav" aria-label="Pages">
+<button data-act="tab" data-t="0" aria-label="Feed"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 9.5V21h5v-6h4v6h5V9.5"/></svg></button>
+<button data-act="tab" data-t="1" aria-label="Groups"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 010 6.4M18 14.4c2.2.7 3.5 2.6 3.5 5.6"/></svg></button>
+<button class="cam" data-act="tab" data-t="2" aria-label="Record"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="3"/><path d="M15.5 10.5L21 7.5v9l-5.5-3"/></svg></button>
+<button data-act="tab" data-t="3" aria-label="Activity"><svg viewBox="0 0 24 24"><path d="M5 17v-5.5a6 6 0 019-5.2M5 17l-1.5 2h17L19 17v-4M10 21h4"/><circle cx="18" cy="6" r="2.4"/></svg></button>
+<button data-act="tab" data-t="4" aria-label="Profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="10" r="3"/><path d="M6 18.5c1.5-2.8 4-3.8 6-3.8s4.5 1 6 3.8"/></svg></button>
+</nav>
+<script>
+const EMO=["❤️","😂","🔥","👏","😮"],BLOBS={};let S,V=null,R=null;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hue=n=>[...n].reduce((a,c)=>a+c.charCodeAt(0)*37,0)%360;
+const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+const day=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5)+S.shift;
+const G=id=>S.groups.find(g=>g.id===id);
+const vlogger=(g,x)=>g.members[((x-g.start)%g.members.length+g.members.length)%g.members.length];
+const av=(n,ring)=>`<span class="av${ring?' ring':''}" style="--h:${hue(n)}">${esc(n[0].toUpperCase())}</span>`;
+const dayLabel=x=>{const d=day()-x;return d===0?'Today':d===1?'Yesterday':d+' days ago'};
+S={shift:0,gid:null,tab:0,groups:[],moments:[],me:{name:'You',user:'you',av:''},ptab:0,act:'all'};
+function save(){}
+function toast(t){document.querySelectorAll('.toast').forEach(x=>x.remove());const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2200)}
+function left(){const n=new Date(),e=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1),m=Math.max(0,Math.floor((e-n)/6e4));return Math.floor(m/60)+'h '+m%60+'m'}
+function render(){const a=document.getElementById('app');
+if(S.gid&&!G(S.gid))S.gid=null;
+document.body.classList.toggle('pg3',S.tab===2);
+document.querySelectorAll('.nav button').forEach((b,i)=>b.classList.toggle('on',i===S.tab));
+if(S.tab===0){feed(a);return}
+if(S.tab===2){page3(a);return}
+if(S.tab===3){activity(a);return}
+if(S.tab===4){profile(a);return}
+if(!S.gid){const d=day();
+a.innerHTML=`<div class="ghead"><span class="sticker">daily</span><button class="addf" data-act="invite"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M19 8v6M16 11h6"/></svg>Add friends</button></div>
+<div class="sec"><span>YOUR GROUPS</span><span>${S.groups.length}</span></div>`+
+(S.groups.map(g=>{const by=vlogger(g,d),p=g.vlogs[d];let sub,st;
+if(p&&p.by==='You'){sub='All caught up';st='<b>DONE</b>'}
+else if(p){sub=esc(p.by)+' posted today';st='<b class="hot">NEW</b>'}
+else if(by==='You'){sub="It's your turn to vlog";st=`<button class="vb" data-act="vlog" data-id="${g.id}" aria-label="Record your vlog"><svg viewBox="0 0 64 44"><rect x="1" y="3" width="46" height="38" rx="10" fill="#FF4F2E"/><path d="M47 17l15-9v28l-15-9z" fill="#FF4F2E"/><text x="24" y="28" text-anchor="middle" font-size="15" font-weight="800" fill="#fff" font-family="inherit">Vlog!</text></svg></button>`}
+else{sub='Waiting on '+esc(by);st='ZZZ<br><b>QUIET</b>'}
+return `<div class="gc" role="button" tabindex="0" data-act="open" data-id="${g.id}"><span class="gph"><span class="gg">${g.members.slice(0,4).map(m=>`<i style="--h:${hue(m)}">${esc(m[0].toUpperCase())}</i>`).join('')}</span><span class="fl">🔥 ${streak(g)}</span></span><span class="gmid"><span class="gname">${esc(g.name)}</span><span class="gsub">${sub}</span></span><span class="gst">${st}</span></div>`}).join('')||'<div class="empty" style="padding:40px 0"><b>No groups yet</b><small>Create one, or join with a friend\'s code.</small></div>')+
+`<button class="newg" data-act="new">+ New group</button><button class="newg" style="margin-top:14px" data-act="join">Join with a code</button>`;return}
+const g=G(S.gid),d=day(),by=vlogger(g,d),p=g.vlogs[d];
+let h=`<div class="row"><button class="ib" data-act="back" aria-label="Back">←</button><h1 class="logo" style="font-size:26px">${esc(g.name)}</h1></div>
+<div class="avs" style="margin:14px 0 4px">${g.members.map(m=>av(m,m===by)).join('')}</div><small>Invite code ${esc(g.code)}</small> <button class="btn ghost" style="padding:6px 14px;margin-left:8px" data-act="invite">Invite</button>
+<h2>Today's vlogger: ${by==='You'?'you':esc(by)}</h2>`;
+if(p)h+=`<div class="card today" data-act="view" data-d="${d}"><div class="poster" style="--h:${hue(p.by)}">${BLOBS[g.id+':'+d]?`<video src="${BLOBS[g.id+':'+d]}" muted playsinline></video>`:`<div class="big">${esc(p.by[0])}</div>`}<span class="dur">▶ ${fmt(p.dur)}</span></div><div class="meta"><b>${esc(p.cap||'Untitled')}</b><br><small>${Object.values(p.reactions).flat().length} reactions · ${p.comments.length} comments</small></div></div>`;
+else if(by==='You')h+=`<div class="card"><p style="margin-top:0">Record up to 5 minutes. It posts when you hit 5:00, when you tap Post, or at the end of the day.</p><button class="btn big" data-act="rec">Start your vlog</button><p class="mute" style="margin-bottom:0">Ends in <span class="left">${left()}</span></p></div>`;
+else h+=`<div class="card"><b>${esc(by)} hasn't posted yet</b><p class="mute" style="margin-bottom:0">Today's vlog drops by midnight, <span class="left">${left()}</span> from now.</p></div>`;
+h+='<h2>Earlier</h2>';
+for(let x=d-1;x>=g.created&&x>d-8;x--){const v=g.vlogs[x],n=vlogger(g,x);
+h+=v?`<button class="past" data-act="view" data-d="${x}"><span class="thumb" style="--h:${hue(v.by)}">${esc(v.by[0])}</span><span><b>${esc(v.cap||'Untitled')}</b><br><small>${esc(v.by)} · ${dayLabel(x)} · ${fmt(v.dur)}</small></span></button>`:`<div class="past"><span class="thumb none">${esc(n[0])}</span><span><b class="mute">${esc(n)} didn't post</b><br><small>${dayLabel(x)}</small></span></div>`}
+a.innerHTML=h}
+function viewer(){const o=document.getElementById('ov');if(!V){o.innerHTML='';return}
+const v=item();if(!v){V=null;o.innerHTML='';return}const u=BLOBS[bkey()];
+o.innerHTML=`<div class="ov"><div class="top"><button class="ib" data-act="close" aria-label="Close">✕</button><div><b>${esc(v.by)}</b> <small>${dayLabel(V.day)}</small></div></div>
+<div class="scroll"><div class="poster" style="--h:${hue(v.by)}">${u?`<video src="${u}" controls playsinline></video>`:`<div class="big">${esc(v.by[0])}</div><span class="dur">${fmt(v.dur)}</span>`}</div>
+<p class="cap">${esc(v.cap||'')}</p>
+<div class="rx">${EMO.map(e=>{const l=v.reactions[e]||[];return `<button class="chip${l.includes('You')?' on':''}" data-act="react" data-e="${e}">${e} ${l.length||''}</button>`}).join('')}</div>
+<h3>${v.comments.length} comment${v.comments.length===1?'':'s'}</h3>
+${v.comments.map(c=>`<div class="cm">${av(c.by)}<div><b>${esc(c.by)}</b><p>${esc(c.text)}</p></div></div>`).join('')||'<p class="mute">Be the first to comment.</p>'}</div>
+<div class="cin"><input id="ci" placeholder="Add a comment" maxlength="200" aria-label="Comment"><button class="btn" data-act="comment">Send</button></div></div>`}
+function keepScroll(fn,bottom){const x=document.querySelector('#ov .scroll'),y=x?x.scrollTop:0;fn();const n=document.querySelector('#ov .scroll');if(n)n.scrollTop=bottom?n.scrollHeight:y}
+async function sendComment(){const i=document.getElementById('ci'),t=i.value.trim();if(!t)return;const v=item();i.value='';v.comments.push({by:'You',text:t});keepScroll(viewer,1);
+const {error}=await sb.from('comments').insert({target_type:v.type,target_id:v.id,user_id:ME.id,body:t.slice(0,200)});if(error){toast(errMsg(error));await refresh()}}
+async function reactToggle(e){const v=item(),l=v.reactions[e]||[],has=l.includes('You');
+if(has){v.reactions[e]=l.filter(n=>n!=='You');if(!v.reactions[e].length)delete v.reactions[e]}else(v.reactions[e]=v.reactions[e]||[]).push('You');
+keepScroll(viewer);
+const k={target_type:v.type,target_id:v.id,user_id:ME.id,emoji:e};
+const {error}=has?await sb.from('reactions').delete().match(k):await sb.from('reactions').insert(k);if(error){toast(errMsg(error));await refresh()}}
+function feed(a){const it=[];S.groups.forEach(g=>Object.entries(g.vlogs).forEach(([d,v])=>v.by!=='You'&&it.push({g,d:+d,v})));S.moments.forEach(v=>v.by!=='You'&&it.push({m:v.id,d:v.day,v}));it.sort((x,y)=>y.d-x.d);
+a.innerHTML='<h1 class="logo" style="font-size:30px">Personal Feed</h1>'+(it.length?'<p><button class="btn ghost" data-act="invite">Invite friends</button></p>':'')+(it.length?it.map(({g,m,d,v})=>`<div class="card today" data-act="view" ${g?`data-gid="${g.id}"`:`data-m="${m}"`} data-d="${d}"><div class="who">${av(v.by)}<span><b>${esc(v.by)}</b><br><small>${g?esc(g.name)+' · vlog':'Daily moment'} · ${dayLabel(d)}</small></span></div><div class="meta"><b>${esc(v.cap||'Untitled')}</b><br><small>▶ ${fmt(v.dur)} · ${Object.values(v.reactions).flat().length} reactions · ${v.comments.length} comments</small></div></div>`).join(''):'<div class="empty"><b>No items in your feed yet</b><small>invite friends to start seeing their vlogs!</small><p style="margin-top:28px"><button class="btn" data-act="invite">Invite friends</button></p></div>')}
+async function invite(){const g=G(S.gid)||S.groups[0],t='Join me on Daily! One friend vlogs each day, everyone reacts.'+(g?' Group code: '+g.code:''),u=location.origin+location.pathname+(g?'?join='+g.code:'');
+try{if(navigator.share){await navigator.share({title:'Daily',text:t,url:u});return}}catch(e){if(e.name==='AbortError')return}
+try{await navigator.clipboard.writeText(t+' '+u);toast('Invite copied. Send it to your friends')}catch(e){toast("Couldn't open sharing here")}}
+function streak(g){let x=day(),n=0;if(!g.vlogs[x])x--;while(g.vlogs[x]){n++;x--}return n}
+function page3(a){a.innerHTML=`<div class="p3"><div class="polaroid"><div class="pin"><span class="rc"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="3"/><path d="M15.5 10.5L21 7.5v9l-5.5-3"/></svg></span><b>Share your<br>daily moment</b></div><div class="pfoot"><span>20 sec max</span><span class="tag">daily</span></div></div>
+<p class="ptxt">Everyone gets 20 seconds to post one daily moment to their friends. Share a moment of your day, and save daily memories to look back on!</p>
+<button class="dk" data-act="record"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="3"/><path d="M15.5 10.5L21 7.5v9l-5.5-3"/></svg>Record moment</button>
+<button class="dk" data-act="lib"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="15" height="14" rx="2"/><circle cx="8" cy="10" r="1.5"/><path d="M3 17l5-4 4 3 3-2 3 3M21 8v10"/></svg>Choose moment from library</button>
+<input type="file" id="lib" accept="video/*" hidden></div>`}
+const hasMoment=()=>S.moments.some(m=>m.by==='You'&&m.day===day());
+const item=()=>V.m!=null?S.moments.find(x=>x.id===V.m):G(V.gid).vlogs[V.day];
+const bkey=()=>V.m!=null?'m:'+V.m:V.gid+':'+V.day;
+function activity(a){const ev=[],mine=[];
+S.groups.forEach(g=>Object.entries(g.vlogs).forEach(([d,v])=>{const ref={gid:g.id,d:+d};v.by==='You'?mine.push({v,ref,w:'vlog'}):ev.push({t:'posts',d:+d,who:v.by,txt:'posted a vlog in '+g.name,ref})}));
+S.moments.forEach(v=>{const ref={m:v.id,d:v.day};v.by==='You'?mine.push({v,ref,w:'moment'}):ev.push({t:'posts',d:v.day,who:v.by,txt:'shared a moment',ref})});
+mine.forEach(({v,ref,w})=>{Object.entries(v.reactions).forEach(([e,l])=>l.filter(n=>n!=='You').forEach(n=>ev.push({t:'reactions',d:ref.d,who:n,txt:'reacted '+e+' to your '+w,ref})));v.comments.filter(c=>c.by!=='You').forEach(c=>ev.push({t:'comments',d:ref.d,who:c.by,txt:'commented: '+c.text,ref}))});
+ev.sort((x,y)=>y.d-x.d);const L=ev.filter(x=>S.act==='all'||x.t===S.act);
+a.innerHTML=`<h1 class="logo" style="font-size:34px">Activity</h1><div class="fcs">${[['all','All'],['reactions','Reactions'],['comments','Comments'],['posts','Vlogs & Moments']].map(([k,n])=>`<button class="fc${S.act===k?' on':''}" data-act="af" data-f="${k}">${n}</button>`).join('')}</div>`+
+(L.length?L.map(x=>`<button class="act" data-act="view" ${x.ref.m!=null?`data-m="${x.ref.m}"`:`data-gid="${x.ref.gid}"`} data-d="${x.ref.d}">${av(x.who)}<span><b>${esc(x.who)}</b> ${esc(x.txt)}<br><small>${dayLabel(x.d)}</small></span></button>`).join(''):`<div class="empty"><svg class="eico" viewBox="0 0 24 24"><path d="M5 17v-6a7 7 0 0114 0v6l2 2H3zM10 21h4"/></svg><b>Nothing here yet</b><small style="font-size:17px;line-height:1.4">Reactions, comments, requests, vlogs and Moments will show up here.</small></div>`)}
+function profile(a){const me=S.me,vl=[],fr=new Set();
+S.groups.forEach(g=>{g.members.forEach(m=>m!=='You'&&fr.add(m));Object.entries(g.vlogs).forEach(([d,v])=>v.by==='You'&&vl.push({g,d:+d,v}))});
+vl.sort((x,y)=>y.d-x.d);const ml=S.moments.map(v=>({v,i:v.id})).filter(o=>o.v.by==='You').reverse();
+const row=(attr,v,d,sub)=>`<button class="past pl" data-act="view" ${attr} data-d="${d}"><span class="thumb" style="--h:${hue(v.by)}">▶</span><span><b>${esc(v.cap||'Untitled')}</b><br><small>${sub} · ${dayLabel(d)} · ${fmt(v.dur)}</small></span></button>`;
+const list=S.ptab===0?vl.map(({g,d,v})=>row('data-gid="'+g.id+'"',v,d,esc(g.name))):ml.map(({v,i})=>row('data-m="'+i+'"',v,v.day,'Moment'));
+a.innerHTML=`<div class="pbg${me.av?'':' none'}" ${me.av?`style="background-image:url(${me.av})"`:''}></div><div class="profw">
+<div class="ptop"><span></span><span class="uname">@${esc(me.user)}</span><button class="dots" data-act="pedit" aria-label="Edit profile">•••</button></div>
+<div class="prow"><button class="pav" data-act="avp" aria-label="Change photo">${me.av?`<img src="${me.av}" alt="">`:esc(me.name[0].toUpperCase())}</button><div><b class="pname">${esc(me.name)}</b><div class="stats"><div><span class="n">${S.groups.length}</span><span class="lab">GROUPS</span></div><div><span class="n">${vl.length}</span><span class="lab">VLOGS</span></div><div><span class="n">${fr.size}</span><span class="lab">FRIENDS</span></div></div></div></div>
+<input type="file" id="av" accept="image/*" hidden>
+<div class="ptabs"><button class="${S.ptab===0?'on':''}" data-act="pt" data-t="0">Vlogs</button><button class="${S.ptab===1?'on':''}" data-act="pt" data-t="1">Moments</button></div>
+${list.join('')||`<div class="pe"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="3"/><path d="M15.5 10.5L21 7.5v9l-5.5-3"/><path d="M3 3l18 18"/></svg><p>No ${S.ptab===0?'vlogs':'moments'} yet</p></div>`}</div>`}
+function psheet(on){document.getElementById('sheet').innerHTML=on?`<div class="ov"><div class="top"><button class="ib" data-act="sclose" aria-label="Close">✕</button><b>Edit profile</b></div><div class="scroll form"><label>Name<input id="pn" maxlength="24" value="${esc(S.me.name)}"></label><label>Username<input id="pu" maxlength="20" value="${esc(S.me.user)}"></label><button class="btn big" data-act="psave">Save</button><p><button class="btn ghost big" data-act="signout">Sign out</button></p></div></div>`:''}
+async function psave(){const n=document.getElementById('pn').value.trim(),u=document.getElementById('pu').value.trim().replace(/^@/,'').replace(/\s+/g,'').toLowerCase();
+if(!n||!/^[a-z0-9_.]{3,20}$/.test(u))return toast('Username: 3-20 letters, numbers, _ or .');
+const {error}=await sb.from('profiles').update({display_name:n,username:u}).eq('id',ME.id);if(error)return toast(/duplicate/.test(error.message)?'That username is taken':errMsg(error));
+S.me.name=n;S.me.user=u;psheet(false);await refresh();toast('Saved')}
+async function setAvatar(b){try{const path=ME.id+'/avatar.jpg';let r=await sb.storage.from('avatars').upload(path,b,{upsert:true,contentType:'image/jpeg'});if(r.error)throw r.error;
+const url=sb.storage.from('avatars').getPublicUrl(path).data.publicUrl+'?v='+Date.now();r=await sb.from('profiles').update({avatar_url:url}).eq('id',ME.id);if(r.error)throw r.error;S.me.av=url;render()}catch(e){toast(errMsg(e))}}
+/* ---- Supabase ---- */
+let sb,ME;const URLC={};
+const errMsg=e=>{const m=(e&&e.message)||'Something went wrong';return /duplicate key/.test(m)?"You've already posted for today":m};
+const ext=b=>/mp4/.test(b.type)?'mp4':/quicktime/.test(b.type)?'mov':'webm';
+async function upload(b){const path=ME.id+'/'+crypto.randomUUID()+'.'+ext(b);const {error}=await sb.storage.from('videos').upload(path,b,{contentType:b.type||'video/webm'});if(error)throw error;return path}
+async function postVlog(gids,d,sec,cap,blob){toast('Posting…');try{const path=blob?await upload(blob):null;
+for(const id of gids){const {error}=await sb.from('vlogs').insert({group_id:id,user_id:ME.id,day:d,caption:cap||'',duration:Math.max(1,Math.round(sec)),video_path:path});if(error)throw error}
+await loadAll();render();toast('Vlog posted to your group')}catch(e){toast(errMsg(e))}}
+async function postMoment(d,sec,cap,blob){toast('Posting…');try{const path=blob?await upload(blob):null;
+const {error}=await sb.from('moments').insert({user_id:ME.id,day:d,caption:cap||'',duration:Math.max(1,Math.round(sec)),video_path:path});if(error)throw error;
+await loadAll();render();toast('Moment posted to your feed')}catch(e){toast(errMsg(e))}}
+async function loadAll(){const day0=day()-30,none={data:[]};
+const {data:mem,error:e1}=await sb.from('group_members').select('joined_at,groups(id,name,code,start_day)').eq('user_id',ME.id).order('joined_at');if(e1)throw e1;
+const gs=mem.map(m=>m.groups).filter(Boolean),gids=gs.map(g=>g.id);
+const [a,b,c]=await Promise.all([
+gids.length?sb.from('group_members').select('group_id,user_id,joined_at').in('group_id',gids).order('joined_at'):none,
+gids.length?sb.from('vlogs').select('*').in('group_id',gids).gte('day',day0):none,
+sb.from('moments').select('*').gte('day',day0).order('created_at')]);
+for(const r of [a,b,c])if(r.error)throw r.error;
+const vl=b.data,mo=c.data,ids=[...vl,...mo].map(x=>x.id);
+const [rx,cm]=ids.length?await Promise.all([sb.from('reactions').select('*').in('target_id',ids),sb.from('comments').select('*').in('target_id',ids).order('created_at')]):[none,none];
+const uids=new Set([...a.data,...vl,...mo,...rx.data,...cm.data].map(x=>x.user_id)),P={};
+if(uids.size){const r=await sb.from('profiles').select('id,username,display_name').in('id',[...uids]);(r.data||[]).forEach(p=>P[p.id]=p)}
+const nm=u=>u===ME.id?'You':(P[u]&&(P[u].display_name||P[u].username))||'Friend';
+const need=[...new Set([...vl,...mo].map(x=>x.video_path).filter(p=>p&&(!URLC[p]||URLC[p].exp<Date.now()+6e5)))];
+if(need.length){const r=await sb.storage.from('videos').createSignedUrls(need,3600);(r.data||[]).forEach(x=>{if(x.signedUrl)URLC[x.path]={u:x.signedUrl,exp:Date.now()+3.6e6}})}
+const mk=(r,type)=>{const o={id:r.id,type,by:nm(r.user_id),day:r.day,dur:r.duration||1,cap:r.caption||'',reactions:{},comments:[]};
+rx.data.filter(x=>x.target_id===o.id).forEach(x=>(o.reactions[x.emoji]=o.reactions[x.emoji]||[]).push(nm(x.user_id)));
+cm.data.filter(x=>x.target_id===o.id).forEach(x=>o.comments.push({by:nm(x.user_id),text:x.body}));return o};
+for(const k in BLOBS)delete BLOBS[k];
+S.groups=gs.map(g=>{const o={id:g.id,name:g.name,code:g.code,start:g.start_day,created:g.start_day,members:a.data.filter(m=>m.group_id===g.id).map(m=>nm(m.user_id)),vlogs:{}};
+vl.filter(v=>v.group_id===g.id).forEach(v=>{o.vlogs[v.day]=mk(v,'vlog');if(v.video_path&&URLC[v.video_path])BLOBS[g.id+':'+v.day]=URLC[v.video_path].u});return o});
+S.moments=mo.map(m=>{const o=mk(m,'moment');if(m.video_path&&URLC[m.video_path])BLOBS['m:'+m.id]=URLC[m.video_path].u;return o})}
+async function refresh(){try{await loadAll()}catch(e){return}if(/INPUT/.test(document.activeElement.tagName))return;render();
+if(V){const vd=document.querySelector('#ov video');if(!vd||vd.paused)keepScroll(viewer)}}
+function sheet(k){const el=document.getElementById('sheet');if(!k){el.innerHTML='';return}
+const top=t=>`<div class="top"><button class="ib" data-act="sclose" aria-label="Close">✕</button><b>${t}</b></div>`;
+el.innerHTML=k==='join'?`<div class="ov">${top('Join a group')}<div class="scroll form"><label>Invite code<input id="gc" maxlength="12" autocapitalize="characters" placeholder="K7M2QX"></label><button class="btn big" data-act="dojoin">Join group</button></div></div>`
+:`<div class="ov">${top('New group')}<div class="scroll form"><label>Group name<input id="gn" maxlength="30" placeholder="Roomies"></label><button class="btn big" data-act="create">Create group</button></div></div>`}
+async function create(){const n=document.getElementById('gn').value.trim();if(!n)return toast('Give your group a name');
+const {data,error}=await sb.rpc('create_group',{p_name:n,p_start_day:day()});if(error)return toast(errMsg(error));
+sheet(false);await loadAll();S.gid=data.id;render();toast('Group created. Invite code: '+data.code)}
+async function doJoin(){const c=document.getElementById('gc').value.trim();if(!c)return;const {data,error}=await sb.rpc('join_group',{p_code:c});if(error)return toast(errMsg(error));
+sheet(false);await loadAll();S.gid=data;render();toast('Joined the group!')}
+async function signOut(){await sb.auth.signOut();location.reload()}
+function authUI(mode,msg){mode=mode||'in';const o=document.getElementById('auth'),up=mode==='up';
+o.innerHTML=`<div class="ov"><div class="scroll form" style="padding-top:60px"><h1 class="logo" style="font-size:44px">daily<i>.</i></h1><p class="mute">One friend vlogs each day. Everyone else reacts.</p>
+${up?'<label>Username<input id="au" maxlength="20" autocapitalize="none" autocomplete="username" placeholder="ammon"></label>':''}
+<label>Email<input id="ae" type="email" autocomplete="email"></label><label>Password<input id="ap" type="password" autocomplete="${up?'new-password':'current-password'}"></label>
+<p class="mute" id="am">${msg||''}</p><button class="btn big" id="ab">${up?'Create account':'Sign in'}</button>
+<p style="text-align:center"><button class="btn ghost" id="as">${up?'I already have an account':'Create an account'}</button></p></div></div>`;
+document.getElementById('as').onclick=()=>authUI(up?'in':'up');document.getElementById('ab').onclick=()=>doAuth(mode)}
+async function doAuth(mode){const em=document.getElementById('ae').value.trim(),pw=document.getElementById('ap').value,am=document.getElementById('am');am.textContent='';
+try{if(mode==='up'){const un=document.getElementById('au').value.trim().toLowerCase();if(!/^[a-z0-9_.]{3,20}$/.test(un)){am.textContent='Username: 3-20 letters, numbers, _ or .';return}
+if(pw.length<6){am.textContent='Password needs at least 6 characters';return}
+const {data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{username:un}}});if(error)throw error;
+if(!data.session){authUI('in','Check your email to confirm your account, then sign in.');return}await start(data.user)}
+else{const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error;await start(data.user)}}catch(e){am.textContent=errMsg(e)}}
+let started=0;
+async function start(user){ME=user;document.getElementById('auth').innerHTML='';
+const {data:p}=await sb.from('profiles').select('*').eq('id',ME.id).single();
+S.me={name:(p&&(p.display_name||p.username))||'You',user:(p&&p.username)||'you',av:(p&&p.avatar_url)||''};
+try{await loadAll()}catch(e){toast(errMsg(e))}
+const j=new URLSearchParams(location.search).get('join');
+if(j){history.replaceState(null,'',location.pathname);const r=await sb.rpc('join_group',{p_code:j});if(r.error)toast(errMsg(r.error));else{try{await loadAll()}catch(e){}S.tab=1;S.gid=r.data;toast('Joined the group!')}}
+render();if(!started){started=1;setInterval(()=>{if(ME&&!R&&document.visibilityState==='visible')refresh()},20000)}}
+async function boot(){const o=document.getElementById('auth');
+if(typeof SUPABASE_URL==='undefined'||/^PASTE/.test(SUPABASE_URL)||!window.supabase){o.innerHTML='<div class="ov"><div class="scroll form" style="padding-top:60px"><h1 class="logo" style="font-size:44px">daily<i>.</i></h1><p>Almost there. Add your Supabase project URL and anon key to <b>config.js</b>, then reload.</p></div></div>';return}
+sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const {data:{session}}=await sb.auth.getSession();session?await start(session.user):authUI()}
+/* recording */
+function recUI(){const o=document.getElementById('ov');
+if(!document.getElementById('cam')){o.innerHTML=`<div class="ov rec"><video id="cam" muted playsinline></video><div class="layer"><div><div class="row"><span class="dot" style="display:none" id="dot"></span><b id="rt">0:00</b><span style="opacity:.6">/ ${fmt(R.max)}</span></div><div class="bar"><i id="rb"></i></div></div><div id="rctl"></div></div></div>`}
+const c=document.getElementById('rctl');
+if(R.stage==='ready'){c.innerHTML=`${R.noCam?'<p style="opacity:.8">Camera isn\'t available here, so this runs as a timer-only demo.</p>':''}<input id="rc" placeholder="What's today about? (optional)" maxlength="80" aria-label="Caption"><button class="btn big" data-act="start">Start recording</button><p style="text-align:center"><button class="btn ghost" style="color:#fff;border-color:#fff5" data-act="discard">Cancel</button></p>`}
+else{document.getElementById('dot').style.display='block';c.innerHTML=`<button class="btn big" data-act="post">Post now</button><p style="text-align:center"><button class="btn ghost" style="color:#fff;border-color:#fff5" data-act="discard">Discard</button></p>`}}
+async function openRec(gids,kind){R={gids,kind:kind||'vlog',max:kind==='moment'?20:300,day:day(),stage:'ready',sec:0,chunks:[]};recUI();
+try{R.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:true});const v=document.getElementById('cam');v.srcObject=R.stream;v.play()}catch(e){R.noCam=true;recUI()}}
+function startRec(){R.cap=(document.getElementById('rc').value||'').trim();R.stage='live';R.t0=Date.now();
+if(R.stream&&window.MediaRecorder){try{R.mr=new MediaRecorder(R.stream,{videoBitsPerSecond:900000,audioBitsPerSecond:64000});R.mr.ondataavailable=e=>e.data.size&&R.chunks.push(e.data);R.mr.start()}catch(e){}}
+recUI();R.t=setInterval(()=>{R.sec=Math.min(R.max,Math.floor((Date.now()-R.t0)/1e3));document.getElementById('rt').textContent=fmt(R.sec);document.getElementById('rb').style.width=R.sec/R.max*100+'%';
+if(R.sec>=R.max||day()!==R.day)finishRec()},250)}
+function endRec(){clearInterval(R&&R.t);if(R&&R.stream)R.stream.getTracks().forEach(t=>t.stop());document.getElementById('ov').innerHTML='';}
+function finishRec(){if(!R||R.done)return;R.done=1;clearInterval(R.t);
+const fin=()=>{const k=R.kind,g=R.gids,d=R.day,sc=R.sec,c=R.cap,bl=R.blob;endRec();R=null;k==='moment'?postMoment(d,sc,c,bl):postVlog(g,d,sc,c,bl)};
+if(R.mr&&R.mr.state!=='inactive'){R.mr.onstop=()=>{R.blob=new Blob(R.chunks,{type:R.mr.mimeType||'video/webm'});fin()};R.mr.stop()}else fin()}
+/* new group */
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
+if(a==='invite')invite();else if(a==='tab'){S.tab=+b.dataset.t;S.gid=null;save();render()}else if(a==='new')sheet(true);else if(a==='join')sheet('join');else if(a==='dojoin')doJoin();else if(a==='signout')signOut();else if(a==='sclose')sheet(false);else if(a==='create')create();
+else if(a==='open'){S.gid=b.dataset.id;save();render()}else if(a==='back'){S.gid=null;save();render()}
+else if(a==='view'){V=b.dataset.m!=null?{m:b.dataset.m,day:+b.dataset.d}:{gid:b.dataset.gid||S.gid,day:+b.dataset.d};viewer()}else if(a==='close'){V=null;viewer();render()}
+else if(a==='react')reactToggle(b.dataset.e);
+else if(a==='comment')sendComment();
+else if(a==='rec')openRec([S.gid],'vlog');else if(a==='vlog')openRec([b.dataset.id],'vlog');
+else if(a==='record'){if(hasMoment())toast("You already shared today's moment");else openRec([],'moment')}
+else if(a==='lib'){if(hasMoment())toast("You already shared today's moment");else document.getElementById('lib').click()}
+else if(a==='af'){S.act=b.dataset.f;save();render()}else if(a==='pt'){S.ptab=+b.dataset.t;save();render()}
+else if(a==='pedit')psheet(true);else if(a==='psave')psave();else if(a==='avp')document.getElementById('av').click();
+else if(a==='start')startRec();else if(a==='post')finishRec();
+else if(a==='discard'){endRec();R=null}
+});
+document.addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const id=e.target.id;e.target.value='';
+if(id==='lib'){const u=URL.createObjectURL(f),v=document.createElement('video');v.preload='metadata';
+v.onloadedmetadata=()=>{if(v.duration>20){toast('Moments can be up to 20 seconds');return}if(f.size>52428800){toast('That video is over 50 MB');return}postMoment(day(),v.duration||1,f.name.replace(/\.[^.]+$/,''),f)};
+v.onerror=()=>toast("Couldn't read that video");v.src=u}
+else if(id==='av'){const im=new Image,u=URL.createObjectURL(f);im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=320;const m=Math.min(im.width,im.height);c.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,320,320);URL.revokeObjectURL(u);c.toBlob(bl=>setAvatar(bl),'image/jpeg',.8)};im.src=u}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='ci')sendComment();if(e.key==='Enter'&&e.target.classList.contains('gc'))e.target.click()});
+setInterval(()=>document.querySelectorAll('.left').forEach(x=>x.textContent=left()),30000);
+boot();
+</script></body></html>
